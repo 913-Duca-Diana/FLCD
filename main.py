@@ -2,37 +2,48 @@
 
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-class HashTable:
-    def __init__(self):
-        self.c = 100
-        self.size = 0
-        self.table = {}
 
+from Model.my_language_specification import *
+from Model.pif import ProgramInternalForm
+from Model.scanner import isConstant, isIdentifier, tokenGenerator
+from Model.st import SymbolTable
 
-    def hash(self, key):
-        hashsum = 0
+# Press the green button in the gutter to run the script.
+if __name__ == '__main__':
+    fileName= input("Insert the name of the file you want to use: ")
+    file=open(fileName, 'r')
 
-        for idx, c in enumerate(key):
-            hashsum += (idx + len(key)) ** ord(c)
-        return hashsum % self.c
+    for line in file:
+        print(line)
 
-    def insert(self, key, value):
-        self.size = self.size + 1
-        index = self.hash(key)
-        if index not in self.table:
-            self.table[index] = []
-        self.table[index].append((key, value))
+    with open(fileName, 'r') as file:
+        for line in file:
+            print([token for token in tokenGenerator(line, separators)])
 
-    def find(self, key):
-        index = self.hash(key)
+    symbolTable=SymbolTable()
+    pif= ProgramInternalForm()
 
-        for node in self.table[index]:
-            if node[0] == key:
-                return node[1]
-        return None
+    with open(fileName, 'r') as file:
+        lineNo = 0
+        for line in file:
+            lineNo += 1
+            for token in tokenGenerator(line[0:-1], separators):
+                if token in separators + operators + reservedWords:
+                    pif.add(codification[token], -1)
+                elif isIdentifier(token):
+                    id = symbolTable.insert(token)
+                    pif.add(codification['identifier'], id)
+                elif isConstant(token):
+                    id = symbolTable.insert(token)
+                    pif.add(codification['constant'], id)
+                else:
+                    raise Exception('Unknown token ' + token + ' at line ' + str(lineNo))
 
+    print('Program Internal Form: \n', pif)
+    print('Symbol Table: \n', symbolTable)
 
-table = HashTable()
-table.insert("cb", "som")
-table.insert("bc", "som")
-print(table.find("bc"))
+    print('\n\nCodification table: ')
+    for e in codification:
+        print(e, " -> ", codification[e])
+
+# See PyCharm help at https://www.jetbrains.com/help/pycharm/
